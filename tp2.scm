@@ -1,5 +1,3 @@
-#! /usr/bin/gsi -:dR
-
 ;;; Fichier : tp2.scm
 
 ;;; Ce programme est une version incomplete du TP2.  Vous devez uniquement
@@ -44,8 +42,8 @@
 (define (st-bind st f)
   (lambda (s)
     (let* ((a (run st s))
-	   (x (car a))
-	   (stt (cdr a)))
+          (x (car a))
+          (stt (cdr a)))
       (run (f x) stt))))
 
 (define (modify f)
@@ -85,12 +83,18 @@
     (if (null? lst)
 	lst
 	(if (eqv? (caar lst) key)
-	    (cdr lst)
-	    (cons (car lst) (del-assoc key (cdr lst)))))))
+	        (cdr lst)
+		    (cons (car lst) (del-assoc key (cdr lst)))))))
 
 (define ensure-assoc
   (lambda (lst key value)
     (cons (cons key value) (del-assoc key lst))))
+
+(define merge-assoc
+  (lambda (lst1 lst2)
+    (if (null? lst1)
+      lst2
+      (merge-assoc (cdr lst1) (ensure-assoc lst2 (caar lst1) (cdar lst1))))))
     
 ;;Accumule les éléments de 'lst' tant qu'ils satisfassent le prédicat 'p'.
 ;;Au premier élément ne satisfaisant pas 'p', ou si la fin de la liste est atteinte,
@@ -99,60 +103,60 @@
 (define span
   (lambda (p lst)
     (let helper ((accum '())
-		 (rest lst))
+		  (rest lst))
       (if (null? rest)
-	  (list (reverse accum) rest)
-	  (if (p (car rest))
-	      (helper (cons (car rest) accum) (cdr rest))
-	      (list (reverse accum) rest))))))
+	    (list (reverse accum) rest)
+	      (if (p (car rest))
+		        (helper (cons (car rest) accum) (cdr rest))
+			      (list (reverse accum) rest))))))
 
 ;;Convertit une liste de charactère représentant des chiffres en le nombre correspondant à la lecture de gauche à droite
 ;;ex:(chars->number '(#\1 #\2 #\3)) => 123
 (define chars->number
   (lambda (lst)
     (foldl (lambda (acc x)
-	     (+ (* 10 acc) (char->int x)))
-	   0
-	   lst)))
+	          (+ (* 10 acc) (char->int x)))
+	      0
+	         lst)))
 
 (define (split p lst)
   (if (null? lst)
       '()
       (if (p (car lst))
-	  (split p (cdr lst))
-	  (let ((tmp (span (lambda (x) (not (p x))) lst)))
-	    (cons (car tmp) (split p (cadr tmp)))))))
+	    (split p (cdr lst))
+	      (let ((tmp (span (lambda (x) (not (p x))) lst)))
+		    (cons (car tmp) (split p (cadr tmp)))))))
 
 (define (take n lst)
   (if (null? lst)
       '()
       (if (<= n 0)
-	  '()
-	  (cons (car lst) (take (- n 1) (cdr lst))))))
+	    '()
+	      (cons (car lst) (take (- n 1) (cdr lst))))))
 
 (define (drop n lst)
   (if (null? lst)
       '()
       (if (<= n 0)
-	  lst
-	  (drop (- n 1) (cdr lst)))))
+	    lst
+	      (drop (- n 1) (cdr lst)))))
 
 (define take-while
   (lambda (p lst)
     (let helper ((lst lst)
-		 (cont (lambda (x) x)))
+		  (cont (lambda (x) x)))
       (if (p (car lst))
-	  (helper (cdr lst) (lambda (x) (cons (car lst) x)))
-	  (cont '())))))
+	    (helper (cdr lst) (lambda (x) (cons (car lst) x)))
+	      (cont '())))))
 
 (define (split-at n lst)
   (let helper ((taken '())
-	       (rest lst)
-	       (n n))
+	              (rest lst)
+		             (n n))
     (if (or (<= n 0) (null? rest))
 	(list (reverse taken) rest)
 	(helper (cons (car rest) taken) (cdr rest) (- n 1)))))
-				  
+  
 (define number->list
   (lambda (number)
     (if (number? number)
@@ -163,8 +167,8 @@
   (lambda (p lst)
     (or (null? lst)
 	(if (p (car lst))
-	    (every p (cdr lst))
-	    #f))))
+	        (every p (cdr lst))
+		    #f))))
 
 (define operator?
   (lambda (char)
@@ -188,68 +192,68 @@
 ;;Fonction pour traiter un jeton, en retournant à la continuation une pile et un dictionnaire potentiellement modifié
 ;;(et potentiellement un message d'erreur)
 (define traiter-jeton
-  (lambda (jeton pile dict cont)
+  (lambda (jeton pile dict tmpdict cont)
     (cond ((char-numeric? (car jeton)) (if (every char-numeric? jeton)
-					   (cont #f (cons (chars->number jeton) pile) dict)
-					   (cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
-						 pile dict)))
-	  ((char-alphabetic? (car jeton)) (if (= (length jeton) 1)
-					      (let ((binding (assoc (car jeton) dict)))
-						(if binding
-						    (cont #f (cons (cdr binding) pile) dict)
-						    (cont (string-append "*** Erreur: variable non-définie: " (string (car jeton)) " ***\n")
-							  pile
-							  dict)))
-						(cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
-						      pile dict)))
-	  ((char=? (car jeton) #\=) (if (= (length jeton) 2)
-					(if (char-alphabetic? (cadr jeton))
-					    (if (> (length pile) 0)
-						(cont #f pile (ensure-assoc dict (cadr jeton) (car pile)))
-						(cont "*** Erreur: argument manquant pour l'opération d'assignation ***\n"
-						      pile dict))
-					    (cont "*** Erreur: jeton invalide - une variable doit être un charactère alphabetic ***\n"
-						  pile dict))
-					(cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
-					      pile dict)))
-	  ((operator? (car jeton)) (apply (lambda (proc narg)
-					    (if (>= (length pile) narg)
-						(cont #f (cons (apply proc (take narg pile)) (drop narg pile)) dict)
-						(cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opérateur "
-								     (string (car jeton)) " ***\n") pile dict)))
+					      (cont #f (cons (chars->number jeton) pile) dict tmpdict)
+					         (cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
+						        pile dict '())))
+	    ((char-alphabetic? (car jeton)) (if (= (length jeton) 1)
+						      (let ((binding (assoc (car jeton) dict)))
+							(if binding
+							        (cont #f (cons (cdr binding) pile) dict tmpdict)
+								    (cont (string-append "*** Erreur: variable non-définie: " (string (car jeton)) " ***\n")
+									    pile
+									      dict '())))
+						      (cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
+							          pile dict '())))
+	      ((char=? (car jeton) #\=) (if (= (length jeton) 2)
+					    (if (char-alphabetic? (cadr jeton))
+						    (if (> (length pile) 0)
+							(cont #f pile dict (ensure-assoc tmpdict (cadr jeton) (car pile)))
+							(cont "*** Erreur: argument manquant pour l'opération d'assignation ***\n"
+							            pile dict '()))
+						        (cont "*** Erreur: jeton invalide - une variable doit être un charactère alphabetic ***\n"
+							        pile dict '()))
+					    (cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
+						        pile dict '())))
+	        ((operator? (car jeton)) (apply (lambda (proc narg)
+						      (if (>= (length pile) narg)
+							  (cont #f (cons (apply proc (take narg pile)) (drop narg pile)) dict tmpdict)
+							  (cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opérateur "
+									            (string (car jeton)) " ***\n") pile dict '())))
 						      (operator->procedure (car jeton))))
-	  (else (cont "Jeton de type inconnue...\n" pile dict)))))
-						   
+		  (else (cont "Jeton de type inconnue...\n" pile dict '())))))
+   
 
 ;;Traite l'ensemble des jeton. La continuation peut retourner à n'importe quel étape du traitement dans le cas d'une erreur
 (define traiter-jetons
-  (lambda (jetons pile dict cont)
+  (lambda (jetons pile dict tmpdict cont)
     (if (null? jetons)
-	(cont #f pile dict)
-	(traiter-jeton (car jetons) pile dict 
-			(lambda (erreur pile dict)
-			  (if erreur
-			      (cons (string->list erreur) dict)
-			      (traiter-jetons (cdr jetons) pile dict cont)))))))
+	(cont #f pile tmpdict dict)
+	(traiter-jeton (car jetons) pile dict tmpdict
+		       (lambda (erreur pile dict tmpdict)
+			   (if erreur
+			             (cons (string->list erreur) dict)
+				           (traiter-jetons (cdr jetons) pile dict tmpdict cont)))))))
 
 (define traiter
   (lambda (expr dict)
     (if (null? expr)
 	(cons '() dict)
 	(let ((tokens (split char-whitespace? expr)))
-;	  (display tokens)
-	  (traiter-jetons tokens '() dict (lambda (erreur pile dict)
-					(if erreur
-					    (cons (string->list erreur) dict)
-					    (cond ((null? pile) (cons '() dict))
-						  ((> (length pile) 1) (cons (string->list "*** Erreur: valeur(s) inutilisée(s) ***") dict))
-						  (else (cons (number->list (car pile)) dict))))))))))
+					;  (display tokens)
+	    (traiter-jetons tokens '() dict '() (lambda (erreur pile tmpdict dict)
+					      (if erreur
+						      (cons (string->list erreur) dict)
+						          (cond ((null? pile) (cons '() dict))
+								  ((> (length pile) 1) (cons (string->list "*** Erreur: valeur(s) inutilisée(s) ***") dict))
+								    (else (cons (number->list (car pile)) (merge-assoc tmpdict dict)))))))))))
 
 ;;;----------------------------------------------------------------------------
 
 
 
-					
+
 ;;; Ne pas modifier cette section.
 
 (define repl
@@ -259,7 +263,7 @@
       (if (string? ligne)
           (let ((r (traiter-ligne ligne dict)))
             (for-each write-char (car r))
-;	    (display (cadr r))
+					;    (display (cadr r))
             (repl (cdr r)))))))
 
 (define traiter-ligne
