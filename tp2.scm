@@ -215,7 +215,7 @@
 	  ((operator? (car jeton)) (if (null? (cdr jeton))
 				       (apply (lambda (proc narg)
 						(if (>= (length pile) narg)
-						    (cont #f (cons (apply proc (take narg pile)) (drop narg pile)) dict)
+						    (cont #f (cons (apply proc (reverse (take narg pile))) (drop narg pile)) dict)
 						    (cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opérateur "
 									 (string (car jeton)) " ***\n") pile dict)))
 					      (operator->procedure (car jeton)))
