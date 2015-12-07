@@ -227,10 +227,10 @@
     (if (null? jetons)
 	(cont #f pile dict)
 	(traiter-jeton (car jetons) pile dict 
-			(lambda (erreur pile dict)
+			(lambda (erreur pile new_dict)
 			  (if erreur
 			      (cons (string->list erreur) dict)
-			      (traiter-jetons (cdr jetons) pile dict cont)))))))
+			      (traiter-jetons (cdr jetons) pile new_dict cont)))))))
 
 (define traiter
   (lambda (expr dict)
