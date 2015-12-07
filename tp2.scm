@@ -212,12 +212,15 @@
 						  pile dict))
 					(cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
 					      pile dict)))
-	  ((operator? (car jeton)) (apply (lambda (proc narg)
-					    (if (>= (length pile) narg)
-						(cont #f (cons (apply proc (take narg pile)) (drop narg pile)) dict)
-						(cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opérateur "
-								     (string (car jeton)) " ***\n") pile dict)))
-						      (operator->procedure (car jeton))))
+	  ((operator? (car jeton)) (if (null? (cdr jeton))
+				       (apply (lambda (proc narg)
+						(if (>= (length pile) narg)
+						    (cont #f (cons (apply proc (take narg pile)) (drop narg pile)) dict)
+						    (cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opérateur "
+									 (string (car jeton)) " ***\n") pile dict)))
+					      (operator->procedure (car jeton)))
+				       (cont (string-append "*** Erreur: opérateur multi-caractères inconnu :" (list->string jeton) "\n")
+					     pile dict)))
 	  (else (cont "Jeton de type inconnue...\n" pile dict)))))
 						   
 
@@ -229,7 +232,7 @@
 	(traiter-jeton (car jetons) pile dict 
 			(lambda (erreur pile new_dict)
 			  (if erreur
-			      (cons (string->list erreur) dict)
+			      (cont erreur pile dict)
 			      (traiter-jetons (cdr jetons) pile new_dict cont)))))))
 
 (define traiter
@@ -238,12 +241,12 @@
 	(cons '() dict)
 	(let ((tokens (split char-whitespace? expr)))
 ;	  (display tokens)
-	  (traiter-jetons tokens '() dict (lambda (erreur pile dict)
-					(if erreur
-					    (cons (string->list erreur) dict)
-					    (cond ((null? pile) (cons '() dict))
-						  ((> (length pile) 1) (cons (string->list "*** Erreur: valeur(s) inutilisée(s) ***") dict))
-						  (else (cons (number->list (car pile)) dict))))))))))
+	  (traiter-jetons tokens '() dict (lambda (erreur pile new_dict)
+					    (if erreur
+						(cons (string->list erreur) dict)
+						(cond ((null? pile) (cons '() new_dict))
+						      ((> (length pile) 1) (cons (string->list "*** Erreur: valeur(s) inutilisée(s) ***") dict))
+						      (else (cons (append (number->list (car pile)) '(#\newline)) new_dict))))))))))
 
 ;;;----------------------------------------------------------------------------
 
