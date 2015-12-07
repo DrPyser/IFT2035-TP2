@@ -3,22 +3,22 @@
 ;;; Fichier : tp2.scm
 
 ;;; Ce programme est une version incomplete du TP2.  Vous devez uniquement
-;;; changer et ajouter du code dans la première section.
+;;; changer et ajouter du code dans la premiÃ¨re section.
 
 ;;;----------------------------------------------------------------------------
 
 ;;; Vous devez modifier cette section.  La fonction "traiter" doit
-;;; être définie, et vous pouvez ajouter des définitions de fonction
-;;; afin de bien décomposer le traitement à faire en petites
+;;; Ãªtre dÃ©finie, et vous pouvez ajouter des dÃ©finitions de fonction
+;;; afin de bien dÃ©composer le traitement Ã  faire en petites
 ;;; fonctions.  Il faut vous limiter au sous-ensemble *fonctionnel* de
 ;;; Scheme dans votre codage (donc n'utilisez pas set!, set-car!,
 ;;; begin, etc).
 
-;;; La fonction traiter reçoit en paramètre une liste de caractères
-;;; contenant la requête lue et le dictionnaire des variables sous
+;;; La fonction traiter reÃ§oit en paramÃ¨tre une liste de caractÃ¨res
+;;; contenant la requÃªte lue et le dictionnaire des variables sous
 ;;; forme d'une liste d'association.  La fonction retourne
-;;; une paire contenant la liste de caractères qui sera imprimée comme
-;;; résultat de l'expression entrée et le nouveau dictionnaire.  Vos
+;;; une paire contenant la liste de caractÃ¨res qui sera imprimÃ©e comme
+;;; rÃ©sultat de l'expression entrÃ©e et le nouveau dictionnaire.  Vos
 ;;; fonctions ne doivent pas faire d'affichage car c'est la fonction
 ;;; "repl" qui se charge de cela.
 
@@ -65,7 +65,7 @@
 	base
 	(foldl f (f base (car lst)) (cdr lst)))))
 
-;;Convertit un caractère représentant un chiffre en l'integer correspondant
+;;Convertit un caractÃ¨re reprÃ©sentant un chiffre en l'integer correspondant
 (define char->int
   (lambda (char)
     (case char
@@ -92,9 +92,9 @@
   (lambda (lst key value)
     (cons (cons key value) (del-assoc key lst))))
     
-;;Accumule les éléments de 'lst' tant qu'ils satisfassent le prédicat 'p'.
-;;Au premier élément ne satisfaisant pas 'p', ou si la fin de la liste est atteinte,
-;;une liste contenant une liste des éléments accumulés ainsi que le reste de 'lst' est retourné.
+;;Accumule les Ã©lÃ©ments de 'lst' tant qu'ils satisfassent le prÃ©dicat 'p'.
+;;Au premier Ã©lÃ©ment ne satisfaisant pas 'p', ou si la fin de la liste est atteinte,
+;;une liste contenant une liste des Ã©lÃ©ments accumulÃ©s ainsi que le reste de 'lst' est retournÃ©.
 ;;ex: (span odd? '(1 3 5 6 7 8 9)) => ((1 3 5) (6 7 8 9))
 (define span
   (lambda (p lst)
@@ -106,7 +106,7 @@
 	      (helper (cons (car rest) accum) (cdr rest))
 	      (list (reverse accum) rest))))))
 
-;;Convertit une liste de charactère représentant des chiffres en le nombre correspondant à la lecture de gauche à droite
+;;Convertit une liste de charactÃ¨re reprÃ©sentant des chiffres en le nombre correspondant Ã  la lecture de gauche Ã  droite
 ;;ex:(chars->number '(#\1 #\2 #\3)) => 123
 (define chars->number
   (lambda (lst)
@@ -185,7 +185,7 @@
       ((#\/) (list / 2)))))      
 
 ;;----------------------------------------------------------------------------
-;;Fonction pour traiter un jeton, en retournant à la continuation une pile et un dictionnaire potentiellement modifié
+;;Fonction pour traiter un jeton, en retournant Ã  la continuation une pile et un dictionnaire potentiellement modifiÃ©
 ;;(et potentiellement un message d'erreur)
 (define traiter-jeton
   (lambda (jeton pile dict cont)
@@ -197,7 +197,7 @@
 					      (let ((binding (assoc (car jeton) dict)))
 						(if binding
 						    (cont #f (cons (cdr binding) pile) dict)
-						    (cont (string-append "*** Erreur: variable non-définie: " (string (car jeton)) " ***\n")
+						    (cont (string-append "*** Erreur: variable non-dÃ©finie: " (string (car jeton)) " ***\n")
 							  pile
 							  dict)))
 						(cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
@@ -206,22 +206,22 @@
 					(if (char-alphabetic? (cadr jeton))
 					    (if (> (length pile) 0)
 						(cont #f pile (ensure-assoc dict (cadr jeton) (car pile)))
-						(cont "*** Erreur: argument manquant pour l'opération d'assignation ***\n"
+						(cont "*** Erreur: argument manquant pour l'opÃ©ration d'assignation ***\n"
 						      pile dict))
-					    (cont "*** Erreur: jeton invalide - une variable doit être un charactère alphabetic ***\n"
+					    (cont "*** Erreur: jeton invalide - une variable doit Ãªtre un charactÃ¨re alphabetic ***\n"
 						  pile dict))
 					(cont (string-append "*** Erreur: jeton invalide: " (list->string jeton) " ***\n")
 					      pile dict)))
 	  ((operator? (car jeton)) (apply (lambda (proc narg)
 					    (if (>= (length pile) narg)
 						(cont #f (cons (apply proc (take narg pile)) (drop narg pile)) dict)
-						(cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opérateur "
+						(cont (string-append "*** Erreur: nombre d'arguments insuffisant pour l'opÃ©rateur "
 								     (string (car jeton)) " ***\n") pile dict)))
 						      (operator->procedure (car jeton))))
-	  (else (cont "What the fuck is that?\n" pile dict)))))
+	  (else (cont "Jeton de type inconnue...\n" pile dict)))))
 						   
 
-;;Traite l'ensemble des jeton. La continuation peut retourner à n'importe quel étape du traitement dans le cas d'une erreur
+;;Traite l'ensemble des jeton. La continuation peut retourner Ã  n'importe quel Ã©tape du traitement dans le cas d'une erreur
 (define traiter-jetons
   (lambda (jetons pile dict cont)
     (if (null? jetons)
@@ -242,7 +242,7 @@
 					(if erreur
 					    (cons (string->list erreur) dict)
 					    (cond ((null? pile) (cons '() dict))
-						  ((> (length pile) 1) (cons (string->list "*** Erreur: valeur(s) inutilisée(s) ***") dict))
+						  ((> (length pile) 1) (cons (string->list "*** Erreur: valeur(s) inutilisÃ©e(s) ***") dict))
 						  (else (cons (number->list (car pile)) dict))))))))))
 
 ;;;----------------------------------------------------------------------------
